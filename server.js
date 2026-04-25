@@ -7,7 +7,7 @@ const bodyParser = require("body-parser");
 const app = express();
 const server = http.createServer(app);
 
-// ✅ FIXED SOCKET CONFIG FOR RENDER
+// ✅ Socket.io (fixed for deployment)
 const io = new Server(server, {
     cors: {
         origin: "*",
@@ -15,7 +15,8 @@ const io = new Server(server, {
     }
 });
 
-app.use(express.static("public"));
+// ✅ Serve frontend
+app.use(express.static(__dirname + "/public"));
 app.use(bodyParser.json());
 
 app.use(session({
@@ -24,10 +25,10 @@ app.use(session({
     saveUninitialized: true
 }));
 
-// 🧠 Fake DB
+// 🧠 Fake DB (temporary)
 let users = {};
 
-// 🎮 ROUND STATE
+// 🎮 Game state
 let currentRound = {
     players: {},
     multiplier: 1,
@@ -35,15 +36,20 @@ let currentRound = {
     running: false
 };
 
+// 🎲 Generate crash point
 function generateCrash() {
-    return (1 / (1 - Math.random())).toFixed(2);
+    return (Math.random() * 5 + 1).toFixed(2);
 }
 
-// 🔐 AUTH
+// ================= AUTH =================
+
+// Register
 app.post("/register", (req, res) => {
     const { username, password } = req.body;
 
-    if (users[username]) return res.json({ error: "User exists" });
+    if (users[username]) {
+        return res.json({ error: "User already exists" });
+    }
 
     users[username] = {
         password,
@@ -53,6 +59,7 @@ app.post("/register", (req, res) => {
     res.json({ success: true });
 });
 
+// Login
 app.post("/login", (req, res) => {
     const { username, password } = req.body;
 
@@ -64,19 +71,32 @@ app.post("/login", (req, res) => {
     res.json({ success: true });
 });
 
+// Get balance
 app.get("/balance", (req, res) => {
     const user = users[req.session.user];
-    res.json({ balance: user?.balance || 0 });
+    res.json({ balance: user ? user.balance : 0 });
 });
 
-// 💰 BET
+// ================= BET =================
+
+// Place bet (min 100 KES)
 app.post("/bet", (req, res) => {
     const user = users[req.session.user];
     const { amount } = req.body;
 
     if (!user) return res.json({ error: "Login first" });
-    if (currentRound.running) return res.json({ error: "Round already started" });
-    if (user.balance < amount) return res.json({ error: "Insufficient balance" });
+
+    if (amount < 100) {
+        return res.json({ error: "Minimum bet is 100 KES" });
+    }
+
+    if (currentRound.running) {
+        return res.json({ error: "Round already started" });
+    }
+
+    if (user.balance < amount) {
+        return res.json({ error: "Insufficient balance" });
+    }
 
     user.balance -= amount;
 
@@ -88,7 +108,8 @@ app.post("/bet", (req, res) => {
     res.json({ success: true });
 });
 
-// 🎮 GAME LOOP
+// ================= GAME LOOP =================
+
 function startRound() {
     currentRound.multiplier = 1;
     currentRound.crashPoint = generateCrash();
@@ -96,14 +117,17 @@ function startRound() {
 
     io.emit("roundStart");
 
-    let start = Date.now();
+    let startTime = Date.now();
 
     const interval = setInterval(() => {
-        let t = (Date.now() - start) / 1000;
-        currentRound.multiplier = Math.exp(0.1 * t);
+        let t = (Date.now() - startTime) / 1000;
+
+        // exponential growth
+        currentRound.multiplier = Math.exp(0.12 * t);
 
         io.emit("multiplier", currentRound.multiplier.toFixed(2));
 
+        // crash condition
         if (currentRound.multiplier >= currentRound.crashPoint) {
             io.emit("crash", currentRound.crashPoint);
 
@@ -111,12 +135,16 @@ function startRound() {
             currentRound.players = {};
 
             clearInterval(interval);
+
+            // next round after 4 sec
             setTimeout(startRound, 4000);
         }
+
     }, 100);
 }
 
-// 👥 SOCKET
+// ================= SOCKET =================
+
 io.on("connection", (socket) => {
 
     socket.on("join", (username) => {
@@ -144,10 +172,20 @@ io.on("connection", (socket) => {
     });
 });
 
-// ✅ IMPORTANT: RENDER PORT FIX
+// ================= START SERVER =================
+
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
     console.log("CASHIN running on port " + PORT);
     startRound();
+});
+
+// 🔥 ERROR HANDLING (important for debugging)
+process.on("uncaughtException", (err) => {
+    console.error("ERROR:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+    console.error("PROMISE ERROR:", err);
 });
