@@ -1,3 +1,4 @@
+let players = {};
 const express = require("express");
 const app = express();
 
@@ -8,4 +9,53 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
     console.log("CASHIN running on port " + PORT);
+});
+io.on("connection", (socket) => {
+
+    console.log("User connected:", socket.id);
+
+    socket.on("join", (username) => {
+        players[socket.id] = {
+            username: username,
+            bet: 0,
+            cashedOut: false
+        };
+
+        io.emit("players", Object.values(players));
+    });
+
+    socket.on("bet", (amount) => {
+        if (!players[socket.id]) return;
+
+        if (amount < 100) {
+            socket.emit("error", "Minimum bet is 100 KES");
+            return;
+        }
+
+        players[socket.id].bet = amount;
+        players[socket.id].cashedOut = false;
+
+        io.emit("players", Object.values(players));
+    });
+
+    socket.on("cashout", (multiplier) => {
+        if (!players[socket.id]) return;
+        if (players[socket.id].cashedOut) return;
+
+        let win = players[socket.id].bet * multiplier;
+
+        players[socket.id].cashedOut = true;
+
+        socket.emit("cashed", win.toFixed(2));
+
+        io.emit("playerCashout", {
+            username: players[socket.id].username,
+            amount: win.toFixed(2)
+        });
+    });
+
+    socket.on("disconnect", () => {
+        delete players[socket.id];
+        io.emit("players", Object.values(players));
+    });
 });
