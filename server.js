@@ -58,8 +58,24 @@ io.on("connection", (socket) => {
             username: players[socket.id].username,
             amount: win.toFixed(2)
         });
-    });
 
+    socket.on("playerCashout", (data) => {
+    console.log(data.username + " cashed out " + data.amount);
+});
+
+    socket.on("players", (players) => {
+    const list = document.getElementById("playersList");
+
+    if (!list) return;
+
+    list.innerHTML = "";
+
+    players.forEach(player => {
+        const li = document.createElement("li");
+        li.textContent = player.username + " - Bet: " + player.bet;
+        list.appendChild(li);
+    });
+});
     socket.on("disconnect", () => {
         delete players[socket.id];
         io.emit("players", Object.values(players));

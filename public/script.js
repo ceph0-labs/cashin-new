@@ -1,8 +1,9 @@
 const socket = io();
 
-// Example username (later we improve)
+// Create random username
 const username = "Player" + Math.floor(Math.random() * 1000);
 
+// Join game
 socket.emit("join", username);
 
 // Place bet
@@ -44,8 +45,9 @@ function updateBalance() {
 
 // 👉 BET (min 100 KES)
 function placeBet() {
-    let bet = Number(document.getElementById("bet").value);
-
+    let amount = parseFloat(document.getElementById("betAmount").value);
+    socket.emit("bet", amount);
+}
     if (bet < 100) {
         alert("Minimum bet is 100 KES");
         return;
@@ -98,6 +100,9 @@ function startRound() {
 
 // 👉 CASHOUT
 function cashOut() {
+    socket.emit("cashout", currentMultiplier);
+}
+{
     if (!playing) return;
 
     let win = betAmount * multiplier;
