@@ -1,6 +1,8 @@
-const socket = io();
-
-let currentUser = "";
+let balance = 1000;
+let betAmount = 0;
+let playing = false;
+let multiplier = 1;
+let crashPoint = 0;
 
 const canvas = document.getElementById("graph");
 const ctx = canvas.getContext("2d");
@@ -10,95 +12,74 @@ canvas.height = 300;
 
 let x = 0;
 
-const plane = document.getElementById("plane");
-
-const takeoff = document.getElementById("takeoff");
-const flying = document.getElementById("flying");
-const crashSound = document.getElementById("crashSound");
-const cashSound = document.getElementById("cashSound");
-
-// AUTH
-async function register() {
-    await fetch("/register", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            username: username.value,
-            password: password.value
-        })
-    });
+function updateBalance() {
+    document.getElementById("balance").innerText = "Balance: " + balance + " KES";
 }
 
-async function login() {
-    const res = await fetch("/login", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            username: username.value,
-            password: password.value
-        })
-    });
+// 👉 BET (min 100 KES)
+function placeBet() {
+    let bet = Number(document.getElementById("bet").value);
 
-    const data = await res.json();
-
-    if (data.success) {
-        currentUser = username.value;
-        socket.emit("join", currentUser);
-        loadBalance();
+    if (bet < 100) {
+        alert("Minimum bet is 100 KES");
+        return;
     }
+
+    if (bet > balance) {
+        alert("Insufficient balance");
+        return;
+    }
+
+    betAmount = bet;
+    balance -= bet;
+    updateBalance();
+
+    startRound();
 }
 
-async function loadBalance() {
-    const res = await fetch("/balance");
-    const data = await res.json();
-    balance.innerText = "Balance: " + data.balance;
-}
-
-// BET
-async function placeBet() {
-    await fetch("/bet", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ amount: betAmount.value })
-    });
-
-    loadBalance();
-}
-
-// CASHOUT
-function cashOut() {
-    socket.emit("cashout");
-}
-
-// GAME
-socket.on("roundStart", () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+function startRound() {
+    playing = true;
+    multiplier = 1;
     x = 0;
-    takeoff.play();
-    flying.play();
-});
 
-socket.on("multiplier", (v) => {
-    multiplier.innerText = v + "x";
+    // crash logic
+    crashPoint = (Math.random() * 5 + 1).toFixed(2);
 
-    let y = canvas.height - (Math.log(v) * 100);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    ctx.lineTo(x, y);
-    ctx.strokeStyle = "#22c55e";
-    ctx.lineWidth = 3;
-    ctx.stroke();
+    let interval = setInterval(() => {
+        multiplier += 0.02;
 
-    plane.style.left = x + "px";
-    plane.style.top = y + "px";
+        document.getElementById("multiplier").innerText =
+            multiplier.toFixed(2) + "x";
 
-    x += 4;
-});
+        let y = canvas.height - multiplier * 40;
 
-socket.on("crash", () => {
-    flying.pause();
-    crashSound.play();
-});
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = "lime";
+        ctx.stroke();
 
-socket.on("cashed", () => {
-    cashSound.play();
-});
+        x += 4;
+
+        if (multiplier >= crashPoint) {
+            clearInterval(interval);
+            playing = false;
+            alert("CRASHED at " + crashPoint + "x");
+        }
+
+    }, 100);
+}
+
+// 👉 CASHOUT
+function cashOut() {
+    if (!playing) return;
+
+    let win = betAmount * multiplier;
+
+    balance += win;
+    updateBalance();
+
+    playing = false;
+
+    alert("You cashed out: " + win.toFixed(2) + " KES");
+}

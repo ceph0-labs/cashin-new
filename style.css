@@ -5,20 +5,9 @@ body {
     font-family: Arial;
 }
 
-.game-wrapper {
-    position: relative;
+canvas {
     width: 80%;
     height: 300px;
-    margin: auto;
-}
-
-#graph {
-    width: 100%;
-    height: 100%;
-    background: #020617;
-}
-
-#plane {
-    position: absolute;
-    width: 40px;
+    background: black;
+    margin-top: 20px;
 }
