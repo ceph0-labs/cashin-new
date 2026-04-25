@@ -1,3 +1,29 @@
+const socket = io();
+
+// Example username (later we improve)
+const username = "Player" + Math.floor(Math.random() * 1000);
+
+socket.emit("join", username);
+
+// Place bet
+function placeBet(amount) {
+    socket.emit("bet", amount);
+}
+
+// Cashout
+function cashOut(multiplier) {
+    socket.emit("cashout", multiplier);
+}
+
+// Listen for players
+socket.on("players", (players) => {
+    console.log("Players:", players);
+});
+
+// Listen for cashouts
+socket.on("playerCashout", (data) => {
+    console.log(data.username + " cashed out " + data.amount);
+});
 let balance = 1000;
 let betAmount = 0;
 let playing = false;

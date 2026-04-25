@@ -7,9 +7,16 @@ app.use(express.static("public"));
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log("CASHIN running on port " + PORT);
-});
+const http = require("http");
+const { Server } = require("socket.io");
+
+const server = http.createServer(app);
+const io = new Server(server);
+
+// Multiplayer storage
+let players = {};
+
+// Socket connection
 io.on("connection", (socket) => {
 
     console.log("User connected:", socket.id);
@@ -58,4 +65,9 @@ io.on("connection", (socket) => {
         delete players[socket.id];
         io.emit("players", Object.values(players));
     });
+});
+
+// IMPORTANT: use server.listen instead of app.listen
+server.listen(PORT, () => {
+    console.log("Server running on port " + PORT);
 });
