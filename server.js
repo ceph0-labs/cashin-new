@@ -1,5 +1,12 @@
+const http = require("http");
+const { Server } = require("socket.io");
 let players = {};
 
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+// your routes / static files here
 io.on("connection", (socket) => {
 
     console.log("User connected:", socket.id);
