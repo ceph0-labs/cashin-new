@@ -5,6 +5,7 @@ let points = [];
 let gameRunning = false;
 let crashPoint = 0;
 let hasBet = false;
+let bettingOpen = false;
 
 // Wait for DOM
 window.onload = () => {
@@ -16,26 +17,47 @@ window.onload = () => {
     canvas.width = 800;
     canvas.height = 300;
 
-    // 🎮 START GAME
+    // 🎮 START GAME WITH 5s BETTING WINDOW
     function startGame() {
-        currentMultiplier = 1;
-        points = [];
-        gameRunning = true;
+
+        gameRunning = false;
+        bettingOpen = true;
         hasBet = false;
 
-        // Random crash between 1.5x and 5.0x
-        crashPoint = parseFloat((Math.random() * 3.5 + 1.5).toFixed(2));
+        let countdown = 5;
 
-        console.log("Crash at:", crashPoint);
+        document.getElementById("multiplier").innerText = "BETTING OPENS";
 
-        // Reset plane position
-        if (plane) {
-            plane.style.left = "0px";
-            plane.style.top = "260px";
-            plane.style.transform = "rotate(20deg)";
-        }
+        const interval = setInterval(() => {
 
-        document.getElementById("multiplier").innerText = "1.00x";
+            document.getElementById("multiplier").innerText =
+                "Starting in " + countdown + "...";
+
+            countdown--;
+
+            if (countdown < 0) {
+                clearInterval(interval);
+
+                // 🚀 START ROUND
+                bettingOpen = false;
+                gameRunning = true;
+
+                currentMultiplier = 1;
+                points = [];
+
+                crashPoint = parseFloat((Math.random() * 3.5 + 1.5).toFixed(2));
+
+                console.log("Crash at:", crashPoint);
+
+                // Reset plane position
+                if (plane) {
+                    plane.style.left = "0px";
+                    plane.style.top = "260px";
+                    plane.style.transform = "rotate(20deg)";
+                }
+            }
+
+        }, 1000);
     }
 
     // 📈 DRAW GRAPH + MOVE PLANE
@@ -75,6 +97,7 @@ window.onload = () => {
             currentMultiplier.toFixed(2) + "x";
 
         points.push(currentMultiplier);
+
         if (points.length > 150) points.shift();
 
         drawGraph();
@@ -85,7 +108,7 @@ window.onload = () => {
 
             document.getElementById("multiplier").innerText = "CRASH 💥";
 
-            // Reset after 2 seconds
+            // Restart after 2 seconds → goes back to betting phase
             setTimeout(() => {
                 startGame();
             }, 2000);
@@ -96,8 +119,8 @@ window.onload = () => {
     // 💰 PLACE BET
     window.placeBet = function () {
 
-        if (!gameRunning || currentMultiplier > 1.05) {
-            alert("Betting closed!");
+        if (!bettingOpen) {
+            alert("Betting is closed!");
             return;
         }
 
@@ -123,11 +146,18 @@ window.onload = () => {
             return;
         }
 
-        let win = (currentMultiplier * parseFloat(document.getElementById("betAmount").value)).toFixed(2);
+        let betAmount = parseFloat(document.getElementById("betAmount").value);
+        let win = (currentMultiplier * betAmount).toFixed(2);
 
         socket.emit("cashout", currentMultiplier);
 
-        alert("You cashed out at " + currentMultiplier.toFixed(2) + "x\nWin: " + win + " KES");
+        alert(
+            "Cashed out at " +
+            currentMultiplier.toFixed(2) +
+            "x\nWin: " +
+            win +
+            " KES"
+        );
 
         hasBet = false;
     };
