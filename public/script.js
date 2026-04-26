@@ -1,83 +1,55 @@
 const socket = io();
 
-const username = "Player" + Math.floor(Math.random() * 1000);
-socket.emit("join", username);
-const plane = document.getElementById("plane");
-
 let currentMultiplier = 1;
-
-// Canvas setup
-const canvas = document.getElementById("graph");
-const ctx = canvas.getContext("2d");
-
-canvas.width = 800;
-canvas.height = 300;
-
 let points = [];
 
-//function drawGraph() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+// Wait for DOM
+window.onload = () => {
 
-    ctx.beginPath();
-    ctx.moveTo(0, canvas.height);
+    const canvas = document.getElementById("graph");
+    const ctx = canvas.getContext("2d");
+    const plane = document.getElementById("plane");
 
-    points.forEach((p, i) => {
-        let x = i * 5;
-        let y = canvas.height - p * 20;
+    canvas.width = 800;
+    canvas.height = 300;
 
-        ctx.lineTo(x, y);
+    function drawGraph() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Move plane to latest point
-        if (i === points.length - 1) {
-            plane.style.left = x + "px";
-            plane.style.top = y + "px";
-        }
-    });
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height);
 
-    ctx.strokeStyle = "lime";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-}
+        points.forEach((p, i) => {
+            let x = i * 5;
+            let y = canvas.height - p * 20;
 
-// Simulated multiplier growth (temporary)
-setInterval(() => {
-    currentMultiplier += 0.02;
+            ctx.lineTo(x, y);
 
-    document.getElementById("multiplier").innerText =
-        currentMultiplier.toFixed(2) + "x";
+            // Move plane safely
+            if (plane && i === points.length - 1) {
+                plane.style.left = x + "px";
+                plane.style.top = y + "px";
+                plane.style.transform = `rotate(${p * 5}deg)`;
+            }
+        });
 
-    points.push(currentMultiplier);
+        ctx.strokeStyle = "lime";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
 
-    if (points.length > 150) points.shift();
+    // GAME LOOP (THIS WAS BREAKING)
+    setInterval(() => {
+        currentMultiplier += 0.02;
 
-    drawGraph();
+        document.getElementById("multiplier").innerText =
+            currentMultiplier.toFixed(2) + "x";
 
-}, 100);
+        points.push(currentMultiplier);
 
-// Bet
-function placeBet() {
-    let amount = parseFloat(document.getElementById("betAmount").value);
-    socket.emit("bet", amount);
-}
+        if (points.length > 150) points.shift();
 
-// Cashout
-function cashOut() {
-    socket.emit("cashout", currentMultiplier);
-}
+        drawGraph();
+    }, 100);
 
-// Players list
-socket.on("players", (players) => {
-    const list = document.getElementById("playersList");
-    list.innerHTML = "";
-
-    players.forEach(p => {
-        const li = document.createElement("li");
-        li.textContent = p.username + " - Bet: " + p.bet;
-        list.appendChild(li);
-    });
-});
-
-// Cashout display
-socket.on("playerCashout", (data) => {
-    alert(data.username + " cashed out " + data.amount);
-});
+};
