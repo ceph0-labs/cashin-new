@@ -1,12 +1,18 @@
+const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
-let players = {};
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// your routes / static files here
+// ✅ Serve frontend
+app.use(express.static("public"));
+
+// Multiplayer storage
+let players = {};
+
+// Socket connection
 io.on("connection", (socket) => {
 
     console.log("User connected:", socket.id);
@@ -56,4 +62,11 @@ io.on("connection", (socket) => {
         io.emit("players", Object.values(players));
     });
 
+});
+
+// ✅ Start server
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+    console.log("Server running on port " + PORT);
 });
