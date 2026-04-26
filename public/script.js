@@ -1,116 +1,83 @@
 const socket = io();
 
-// Create random username
 const username = "Player" + Math.floor(Math.random() * 1000);
-
-// Join game
 socket.emit("join", username);
+const plane = document.getElementById("plane");
 
-// Place bet
-function placeBet(amount) {
-    socket.emit("bet", amount);
-}
+let currentMultiplier = 1;
 
-// Cashout
-function cashOut(multiplier) {
-    socket.emit("cashout", multiplier);
-}
-
-// Listen for players
-socket.on("players", (players) => {
-    console.log("Players:", players);
-});
-
-// Listen for cashouts
-socket.on("playerCashout", (data) => {
-    console.log(data.username + " cashed out " + data.amount);
-});
-let balance = 1000;
-let betAmount = 0;
-let playing = false;
-let multiplier = 1;
-let crashPoint = 0;
-
+// Canvas setup
 const canvas = document.getElementById("graph");
 const ctx = canvas.getContext("2d");
 
 canvas.width = 800;
 canvas.height = 300;
 
-let x = 0;
+let points = [];
 
-function updateBalance() {
-    document.getElementById("balance").innerText = "Balance: " + balance + " KES";
+//function drawGraph() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height);
+
+    points.forEach((p, i) => {
+        let x = i * 5;
+        let y = canvas.height - p * 20;
+
+        ctx.lineTo(x, y);
+
+        // Move plane to latest point
+        if (i === points.length - 1) {
+            plane.style.left = x + "px";
+            plane.style.top = y + "px";
+        }
+    });
+
+    ctx.strokeStyle = "lime";
+    ctx.lineWidth = 2;
+    ctx.stroke();
 }
 
-// 👉 BET (min 100 KES)
+// Simulated multiplier growth (temporary)
+setInterval(() => {
+    currentMultiplier += 0.02;
+
+    document.getElementById("multiplier").innerText =
+        currentMultiplier.toFixed(2) + "x";
+
+    points.push(currentMultiplier);
+
+    if (points.length > 150) points.shift();
+
+    drawGraph();
+
+}, 100);
+
+// Bet
 function placeBet() {
     let amount = parseFloat(document.getElementById("betAmount").value);
     socket.emit("bet", amount);
 }
-    if (bet < 100) {
-        alert("Minimum bet is 100 KES");
-        return;
-    }
 
-    if (bet > balance) {
-        alert("Insufficient balance");
-        return;
-    }
-
-    betAmount = bet;
-    balance -= bet;
-    updateBalance();
-
-    startRound();
-}
-
-function startRound() {
-    playing = true;
-    multiplier = 1;
-    x = 0;
-
-    // crash logic
-    crashPoint = (Math.random() * 5 + 1).toFixed(2);
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    let interval = setInterval(() => {
-        multiplier += 0.02;
-
-        document.getElementById("multiplier").innerText =
-            multiplier.toFixed(2) + "x";
-
-        let y = canvas.height - multiplier * 40;
-
-        ctx.lineTo(x, y);
-        ctx.strokeStyle = "lime";
-        ctx.stroke();
-
-        x += 4;
-
-        if (multiplier >= crashPoint) {
-            clearInterval(interval);
-            playing = false;
-            alert("CRASHED at " + crashPoint + "x");
-        }
-
-    }, 100);
-}
-
-// 👉 CASHOUT
+// Cashout
 function cashOut() {
     socket.emit("cashout", currentMultiplier);
 }
-{
-    if (!playing) return;
 
-    let win = betAmount * multiplier;
+// Players list
+socket.on("players", (players) => {
+    const list = document.getElementById("playersList");
+    list.innerHTML = "";
 
-    balance += win;
-    updateBalance();
+    players.forEach(p => {
+        const li = document.createElement("li");
+        li.textContent = p.username + " - Bet: " + p.bet;
+        list.appendChild(li);
+    });
+});
 
-    playing = false;
-
-    alert("You cashed out: " + win.toFixed(2) + " KES");
-}
+// Cashout display
+socket.on("playerCashout", (data) => {
+    alert(data.username + " cashed out " + data.amount);
+});

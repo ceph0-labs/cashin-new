@@ -4,22 +4,33 @@
     <title>CASHIN</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<script src="/socket.io/socket.io.js"></script>
 <body>
+
 <h1>💰 CASHIN</h1>
 
-<h2 id="balance">Balance: 1000 KES</h2>
+<div class="top-bar">
+    <span>Balance: <b id="balance">1000</b> KES</span>
+</div>
 
-<input id="bet" placeholder="Enter bet (min 100)">
-<button onclick="placeBet()">BET</button>
-<button onclick="cashOut()">CASH OUT</button>
+<div class="game-container">
+    <img id="plane" src="https://cdn-icons-png.flaticon.com/512/34/34627.png">
 
-<h2 id="multiplier">1.00x</h2>
+    <canvas id="graph"></canvas>
 
-<canvas id="graph"></canvas>
+    <div id="multiplier">1.00x</div>
 
+</div>
+
+<div class="controls">
+    <input type="number" id="betAmount" value="100">
+    <button onclick="placeBet()">BET</button>
+    <button onclick="cashOut()">CASH OUT</button>
+</div>
+
+<h3>Players</h3>
 <ul id="playersList"></ul>
 
+<script src="/socket.io/socket.io.js"></script>
 <script src="script.js"></script>
 
 </body>
