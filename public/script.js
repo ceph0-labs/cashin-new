@@ -27,7 +27,6 @@ window.onload = () => {
         let countdown = 5;
 
         document.getElementById("multiplier").innerText = "BETTING OPENS";
-        document.getElementById("multiplier").innerText= "I LOVE YOU❤️";
 
         const interval = setInterval(() => {
 
