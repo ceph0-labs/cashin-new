@@ -1,7 +1,7 @@
 const socket = io();
 
-let currentMultiplier = 2;
-let points = [];
+let currentMultiplier = 1;
+let points = [1000];
 let gameRunning = true;
 let crashPoint = 0;
 let hasBet = false;
@@ -12,7 +12,7 @@ window.onload = () => {
 
     const canvas = document.getElementById("graph");
     const ctx = canvas.getContext("2d");
-    const plane = document.getElementById("plane");
+    const plane = document.getElementById("greenplane");
 
     canvas.width = 800;
     canvas.height = 300;
