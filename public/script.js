@@ -1,11 +1,11 @@
 const socket = io();
 
-let currentMultiplier = 1;
+let currentMultiplier = 2;
 let points = [];
-let gameRunning = false;
+let gameRunning = true;
 let crashPoint = 0;
 let hasBet = false;
-let bettingOpen = false;
+let bettingOpen = true;
 
 // Wait for DOM
 window.onload = () => {
@@ -42,7 +42,7 @@ window.onload = () => {
                 bettingOpen = false;
                 gameRunning = true;
 
-                currentMultiplier = 1;
+                currentMultiplier = 2;
                 points = [];
 
                 crashPoint = parseFloat((Math.random() * 3.5 + 1.5).toFixed(2));
@@ -78,6 +78,7 @@ window.onload = () => {
                 plane.style.left = x + "px";
                 plane.style.top = y + "px";
                 plane.style.transform = `rotate(${p * 5}deg)`;
+                plane.style.colour= "red"
             }
         });
 
