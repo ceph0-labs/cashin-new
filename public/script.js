@@ -45,7 +45,7 @@ window.onload = () => {
                 currentMultiplier = 2;
                 points = [];
 
-                crashPoint = parseFloat((Math.random() * 3.5 + 1.5).toFixed(0.5));
+                crashPoint = parseFloat((Math.random() * 3.5 + 1.5).toFixed(2));
 
                 console.log("Crash at:", crashPoint);
 
@@ -78,12 +78,11 @@ window.onload = () => {
                 plane.style.left = x + "px";
                 plane.style.top = y + "px";
                 plane.style.transform = `rotate(${p * 5}deg)`;
-                plane.style.colour= "red"
             }
         });
 
         ctx.strokeStyle = "lime";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1;
         ctx.stroke();
     }
 
