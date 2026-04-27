@@ -45,7 +45,7 @@ window.onload = () => {
                 currentMultiplier = 2;
                 points = [];
 
-                crashPoint = parseFloat((Math.random() * 3.5 + 1.5).toFixed(2));
+                crashPoint = parseFloat((Math.random() * 3.5 + 1.5).toFixed(0.5));
 
                 console.log("Crash at:", crashPoint);
 
