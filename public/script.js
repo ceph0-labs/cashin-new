@@ -1,7 +1,7 @@
 const socket = io();
 
 let currentMultiplier = 1;
-let points = [0-1000];
+let points = [1000];
 let gameRunning = true;
 let crashPoint = 0;
 let hasBet = false;
@@ -25,7 +25,6 @@ window.onload = () => {
         hasBet = false;
 
         let countdown = 5;
-        let points = {-100};
 
         document.getElementById("multiplier").innerText = "BETTING OPENS";
 
